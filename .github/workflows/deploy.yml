@@ -1,0 +1,59 @@
+# Nama workflow yang akan muncul di tab "Actions"
+name: Build and Deploy PHP to GitHub Pages
+
+# Pemicu: Kapan workflow ini akan berjalan
+on:
+  # Berjalan setiap kali ada push ke branch 'main'
+  push:
+    branches: [ "main" ]
+  # Memungkinkan Anda menjalankan workflow ini secara manual
+  workflow_dispatch:
+
+# Izin yang dibutuhkan workflow untuk deploy ke GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Pekerjaan yang akan dilakukan
+jobs:
+  deploy:
+    # Mengatur lingkungan deploy untuk GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    # Menentukan mesin virtual yang akan digunakan
+    runs-on: ubuntu-latest
+
+    # Langkah-langkah yang akan dieksekusi
+    steps:
+      # 1. Mengunduh kode dari repositori Anda
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Menginstal PHP pada mesin virtual
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2' # Anda bisa ganti versi PHP di sini
+
+      # 3. Proses "Build": Menjalankan PHP dan menyimpan outputnya
+      - name: Build static site
+        run: php index.php > index.html
+
+      # 4. Menyiapkan artefak (hasil build) untuk diunggah
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # 5. Mengunggah hasil build (file index.html) sebagai artefak
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Unggah seluruh isi direktori
+          path: '.'
+
+      # 6. Deploy artefak ke GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
